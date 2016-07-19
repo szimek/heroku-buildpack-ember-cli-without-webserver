@@ -1,5 +1,6 @@
 install_node() {
   # Look in package.json's engines.node field for a semver range
+  # chmod +x "$bp_dir/vendor/jq"
   local semver_range=$($bp_dir/vendor/jq -r .engines.node $build_dir/package.json)
 
   # Resolve node version using semver.io
