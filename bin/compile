@@ -8,7 +8,7 @@ set -o pipefail   # don't ignore exit codes when piping output
 # set -x          # enable debugging
 
 # Configure directories
-build_dir=$1
+build_dir="$1/zapnito-web"
 cache_dir=$2
 env_dir=$3
 bp_dir=$(cd $(dirname $0); cd ..; pwd)
@@ -16,6 +16,9 @@ heroku_dir=$build_dir/.heroku
 
 # Load some convenience functions like status(), echo(), and indent()
 source $bp_dir/bin/common.sh
+
+# Load main build operations
+source $bp_dir/bin/build_operations.sh
 
 # Avoid GIT_DIR leak from previous build steps
 unset GIT_DIR
@@ -27,22 +30,13 @@ trap build_failed ERR
 export EMBER_ENV=production
 export_env_dir $env_dir
 
-# Run subsequent commands from the build directory
+# Main build sequence
 cd $build_dir
+prepare_cache
+install_node
+setup_node_modules
+setup_bower_components
+build_zapnito_web
+deploy_zapnito_web
+cleanup
 
-####### Build the project's dependencies
-
-head "Building dependencies"
-
-# Install bower
-info "Installing bower"
-npm install --quiet -g bower > /dev/null 2>&1 | indent
-
-# Install bower components
-info "Installing bower components"
-bower install --quiet | indent
-
-# Build ember cli application
-build_env=${EMBER_ENV:-production}
-head "Building Ember CLI application $build_env distribution"
-node_modules/ember-cli/bin/ember build --environment $build_env | indent
